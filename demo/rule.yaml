@@ -1,0 +1,88 @@
+name: demo
+
+transform:
+  parse: lower
+  render: lower | replace(" ", ".")
+
+parse:
+  # VCB-Studio / Studio GreenTea
+  # [BeanSub&FZSD&VCB-Studio] Jujutsu Kaisen [01][Ma10p_1080p][x265_flac].mkv
+  # [Studio GreenTea] Kimi ga Shinu made Koi wo Shitai [01][WebRip][HEVC-10bit 1080p AAC ASSx2].mkv
+  - template: '[{release}] {title} [{episode=digits:zpad(2)}][{_}][{_}]'
+    condition: file.suffix == '.mkv'
+  # [BeanSub&FZSD&VCB-Studio] Jujutsu Kaisen [01][Ma10p_1080p][x265_flac].sc.ass
+  - template: '[{release}] {title} [{episode=digits:zpad(2)}][{_}][{_}].{subtitle_tag}'
+    condition: file.suffix == '.ass'
+  # [BeanSub&FZSD&VCB-Studio] Gekijouban Jujutsu Kaisen 0 [Ma10p_1080p][x265_flac].mkv
+  - template: '[{release}] {title} [{_}][{_}]'
+    condition: file.suffix in ['.mkv', '.mka']
+  # [BeanSub&FZSD&VCB-Studio] Gekijouban Jujutsu Kaisen 0 [Ma10p_1080p][x265_flac].sc.ass
+  - template: '[{release}] {title} [{_}][{_}].{subtitle_tag}'
+    condition: file.suffix == '.ass'
+
+  # Nekomoe kissaten
+  # [Nekomoe kissaten][Akane-banashi][01][1080p][JPSC].mp4
+  - template: '[{release}][{title}][{episode=digits:zpad(2)}][{_}][{_}]'
+    condition: file.suffix == '.mp4'
+
+  # others
+  # [Studio GreenTea] Kimi ga Shinu made Koi wo Shitai [01].JPSC.ass
+  - template: '[{release}] {title} [{episode=digits:zpad(2)}].{subtitle_tag}'
+    condition: file.suffix == '.ass'
+
+group:
+  - token: episode:zpad(2)
+    partition: equal
+  - token: title:trim|lower
+    partition: equal
+
+extensions:
+  - name: anime:file_resolution
+    outputs:
+      height: height
+
+  - name: anime:bangumi_search
+    inputs:
+      title: title
+    outputs:
+      name_cn: title_cn
+      date: year:date_format("%Y-%m-%d", "%Y")
+
+  - name: builtin:lookup
+    inputs:
+      value: release
+    outputs:
+      value: encoder_release
+    options:
+      vcb-studio: [beansub&fzsd&vcb-studio]
+      nekomoe: [nekomoe kissaten]
+      greentea: [studio greentea]
+
+  - name: builtin:lookup
+    inputs:
+      value: subtitle_tag
+    outputs:
+      value: subtitle_language
+    options:
+      sc: [sc]
+      tc: [tc]
+      sc&jp: [jpsc]
+      tc&jp: [jptc]
+
+render:
+  - template: '{title_cn}[{height}p]{title}.{year}.s01e{episode}[{encoder_release}]'
+    condition: >-
+      file.suffix in ['.mp4', '.mkv', '.mka']
+      and exists(episode)
+  - template: '{title_cn}[{height}p]{title}.{year}.s01e{episode}[{encoder_release}].{subtitle_language}'
+    condition: >-
+      file.suffix == '.ass'
+      and exists(episode)
+  - template: '{title_cn}[{height}p]{title}.{year}[{encoder_release}]'
+    condition: >-
+      file.suffix in ['.mkv', '.mka']
+      and not exists(episode)
+  - template: '{title_cn}[{height}p]{title}.{year}[{encoder_release}].{subtitle_language}'
+    condition: >-
+      file.suffix == '.ass'
+      and not exists(episode)

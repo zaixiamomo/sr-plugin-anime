@@ -1,0 +1,24 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "sr-plugin-anime"
+dynamic = ["version"]
+description = "Structured Renamer 动画作品查询与视频元数据插件"
+readme = "README.md"
+license = { text = "MIT" }
+requires-python = ">=3.10"
+dependencies = ["structured-renamer>=0.2.0,<0.3.0"]
+
+[project.entry-points."sr.plugins"]
+anime = "extenders:DOMAIN"
+
+[tool.hatch.build.targets.wheel]
+packages = ["extenders"]
+
+[tool.hatch.version]
+path = "extenders/__init__.py"
+
+[tool.hatch.build.targets.sdist]
+include = ["/extenders", "/demo/rule.yaml", "/README.md", "/docs/extenders.md", "/LICENSE", "/CHANGELOG.md", "/pyproject.toml"]
